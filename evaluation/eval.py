@@ -1,7 +1,7 @@
 import torch
 from architecture.gpt import GPTModel, GPT_CONFIG_124M
 from data.data_preparation import create_dataloader_v1
-from data.data_preparation import text_data
+from data.tokenizer_from_scratch import text as text_data
 
 
 torch.manual_seed(123)
@@ -39,7 +39,6 @@ def calc_loss_batch(input_batch, target_batch, model, device):
     logits = model(input_batch)
     loss = torch.nn.functional.cross_entropy(logits.flatten(0, 1), target_batch.flatten())
     return loss
-
 
 def calc_loss_loader(data_loader, model, device, num_batches=None):
     total_loss = 0.
