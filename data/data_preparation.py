@@ -1,6 +1,20 @@
 import tiktoken
 import torch
 from torch.utils.data import Dataset, DataLoader
+from architecture.gpt import GPT_CONFIG_124M
+from tokenizer_from_scratch import text as text_data
+
+
+tokenizer = tiktoken.get_encoding("gpt2")
+
+def text_to_token_ids(text, tokenizer):
+    encoded = tokenizer.encode(text, allowed_special={'<|endoftext|>'})
+    encoded_tensor = torch.tensor(encoded).unsqueeze(0) # add batch dimension
+    return encoded_tensor
+
+def token_ids_to_text(token_ids, tokenizer):
+    flat = token_ids.squeeze(0) # remove batch dimension
+    return tokenizer.decode(flat.tolist())
 
 
 # Creating the dataset
@@ -9,7 +23,6 @@ class GPTDatasetV1(Dataset):
         self.input_ids = []
         self.target_ids = []
 
-        # Tokenize the entire text
         token_ids = tokenizer.encode(txt, allowed_special={"<|endoftext|>"})
 
         # Use a sliding window to chunk the book into overlapping sequences of max_length
@@ -34,7 +47,6 @@ def create_dataloader_v1(txt, batch_size=4, max_length=256,
     tokenizer = tiktoken.get_encoding("gpt2")
     dataset = GPTDatasetV1(txt, tokenizer, max_length, stride)
 
-    # Create dataloader
     dataloader = DataLoader(
         dataset,
         batch_size=batch_size,
@@ -44,3 +56,30 @@ def create_dataloader_v1(txt, batch_size=4, max_length=256,
     )
 
     return dataloader
+
+
+# Train/validation ratio
+train_ratio = 0.90
+split_idx = int(train_ratio * len(text_data))
+train_data = text_data[:split_idx]
+val_data = text_data[split_idx:]
+
+train_loader = create_dataloader_v1(
+    train_data,
+    batch_size=2,
+    max_length=GPT_CONFIG_124M["context_length"],
+    stride=GPT_CONFIG_124M["context_length"],
+    drop_last=True,
+    shuffle=True,
+    num_workers=0
+)
+
+val_loader = create_dataloader_v1(
+    val_data,
+    batch_size=2,
+    max_length=GPT_CONFIG_124M["context_length"],
+    stride=GPT_CONFIG_124M["context_length"],
+    drop_last=False,
+    shuffle=False,
+    num_workers=0
+)
