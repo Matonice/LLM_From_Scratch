@@ -1,3 +1,9 @@
+finetuning/sms_spam_collection/
+finetuning/sms_spam_collection.zip
+test.csv
+train.csv
+validation.csv
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
